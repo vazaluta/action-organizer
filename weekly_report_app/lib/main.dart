@@ -59,7 +59,8 @@ class _WeeklyReportHomeState extends State<WeeklyReportHome> {
         title: const Text('週報'),
         centerTitle: true,
       ),
-      body: Form(
+      body: SelectionArea(
+        child: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -94,6 +95,7 @@ class _WeeklyReportHomeState extends State<WeeklyReportHome> {
             const SizedBox(height: 32),
           ],
         ),
+      ),
       ),
     );
   }
