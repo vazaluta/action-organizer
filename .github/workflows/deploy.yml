@@ -1,3 +1,23 @@
+# 【全体の仕組み】
+# masterにpushされると以下の流れで自動デプロイされる：
+#
+# master に push
+#   ↓
+# GitHub Actions が起動（ubuntu マシン）
+#   ↓
+# flutter build web でDartコードをJavaScript+HTML一式に変換
+#   ↓
+# weekly_report_app/build/web/ にWebページとして動くファイル一式が生成される
+#   ↓
+# peaceiris/actions-gh-pages が build/web/ の中身を gh-pages ブランチに push
+#   ↓
+# GitHub Pages が gh-pages ブランチを配信
+#   ↓
+# https://vazaluta.github.io/weekly_report/ でアクセス可能
+#
+# ポイント：flutter build web がWebページとして動く形に変換する責任を持ち
+#           GitHub Pages はファイルを配信するだけ。だから不整合が起きない。
+
 name: Deploy Flutter Web to GitHub Pages
 
 # masterブランチにpushされたときだけ実行
@@ -30,12 +50,16 @@ jobs:
         run: flutter pub get
         working-directory: weekly_report_app
 
-      # Web用にビルド（--base-hrefはGitHub PagesのサブパスURLに対応するため必要）
+      # flutter build web でDartコードをJS+HTML一式に変換
+      # --base-href はGitHub PagesのサブパスURLに対応するため必要
+      # （これがないとJS/CSSのパスがずれて画面が真っ白になる）
       - name: Build Flutter Web
         run: flutter build web --base-href /weekly_report/
         working-directory: weekly_report_app
 
-      # ビルド結果をgh-pagesブランチにデプロイ（GITHUB_TOKENは自動発行されるので設定不要）
+      # build/web/ の中身をそのままgh-pagesブランチにpush
+      # masterのソースコードは含まれず、ビルド成果物だけが入る
+      # GITHUB_TOKENはGitHubが自動発行するので設定不要
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
