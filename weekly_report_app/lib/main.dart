@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const WeeklyReportApp());
@@ -84,6 +85,12 @@ class _WeeklyReportHomeState extends State<WeeklyReportHome> {
               icon: const Icon(Icons.save),
               label: const Text('週報を保存する'),
             ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _copyToClipboard,
+              icon: const Icon(Icons.copy),
+              label: const Text('テキストをコピーする'),
+            ),
             const SizedBox(height: 32),
           ],
         ),
@@ -122,6 +129,52 @@ class _WeeklyReportHomeState extends State<WeeklyReportHome> {
   void _submit() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('週報を保存しました！')),
+    );
+  }
+
+  void _copyToClipboard() {
+    final text = '''
+# 週報
+
+## 1. 今週の振り返り
+
+Q1. 今週あなたは何をやろうとしていた？
+${_controllers['q1']!.text}
+
+Q2. 今週あなたが実行したことで「特筆すべきこと」は何？
+${_controllers['q2']!.text}
+
+Q3. 今週あなたの「資産」は増えた？
+${_controllers['q3']!.text}
+
+## 2. 目的の見直し
+
+Q4. 今から10年後に必ず願いが叶うとしたらあなたは何を叶える？
+${_controllers['q4']!.text}
+
+Q5. その願いを実現する際に直面する課題は何？
+${_controllers['q5']!.text}
+
+Q6. その課題を解決した人、参考になる人、質問すべき人は誰？
+${_controllers['q6']!.text}
+
+## 3. 来週の目標設定
+
+Q7. 1週間後にあなたは死ぬ。今から何をやめるべき？
+${_controllers['q7']!.text}
+
+Q8. これからの1週間であなたは何をやるべき？
+${_controllers['q8']!.text}
+
+Q9. そのやるべきことの実行で直面する課題は何？
+${_controllers['q9']!.text}
+
+Q10. 目の前で「自分」が悩んでいたら何をアドバイスする？
+${_controllers['q10']!.text}
+''';
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('クリップボードにコピーしました！')),
     );
   }
 }
