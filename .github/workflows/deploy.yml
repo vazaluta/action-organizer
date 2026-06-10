@@ -20,11 +20,11 @@
 
 name: Deploy Flutter Web to GitHub Pages
 
-# masterブランチにpushされたときだけ実行
+# mainブランチにpushされたときだけ実行
 on:
   push:
     branches:
-      - master
+      - main
 
 # gh-pagesブランチへの書き込み権限を付与
 permissions:
