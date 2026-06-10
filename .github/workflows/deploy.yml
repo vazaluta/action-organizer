@@ -1,33 +1,41 @@
 name: Deploy Flutter Web to GitHub Pages
 
+# masterブランチにpushされたときだけ実行
 on:
   push:
     branches:
       - master
 
+# gh-pagesブランチへの書き込み権限を付与
 permissions:
   contents: write
 
 jobs:
   build-and-deploy:
+    # GitHubが用意したUbuntuマシン上で実行
     runs-on: ubuntu-latest
     steps:
+      # リポジトリのコードをマシンにダウンロード
       - uses: actions/checkout@v4
 
+      # Flutter 3.32.2をインストール
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.32.2'
           channel: 'stable'
 
+      # Flutterの依存パッケージをインストール
       - name: Install dependencies
         run: flutter pub get
         working-directory: weekly_report_app
 
+      # Web用にビルド（--base-hrefはGitHub PagesのサブパスURLに対応するため必要）
       - name: Build Flutter Web
         run: flutter build web --base-href /weekly_report/
         working-directory: weekly_report_app
 
+      # ビルド結果をgh-pagesブランチにデプロイ（GITHUB_TOKENは自動発行されるので設定不要）
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
