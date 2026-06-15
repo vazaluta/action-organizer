@@ -1,5 +1,5 @@
-# weekly_report
+# action-organizer
 
-週報を記録・コピーできる Flutter Web アプリ。
+Routine・Task・Hobbyで行動を整理する Flutter Web アプリ。
 
-https://vazaluta.github.io/weekly_report/
+https://vazaluta.github.io/action-organizer/
