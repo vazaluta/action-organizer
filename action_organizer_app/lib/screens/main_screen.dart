@@ -64,8 +64,26 @@ class _MainScreenState extends State<MainScreen>
   }
 
   Future<void> _deleteItem(Item item) async {
+    final index = _items.indexWhere((i) => i.id == item.id);
     setState(() => _items.removeWhere((i) => i.id == item.id));
     await _saveItems();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('「${item.title}」を削除しました'),
+        action: SnackBarAction(
+          label: '元に戻す',
+          onPressed: () async {
+            setState(() {
+              final insertIndex = index.clamp(0, _items.length);
+              _items.insert(insertIndex, item);
+            });
+            await _saveItems();
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _openDetail(Item item) async {
