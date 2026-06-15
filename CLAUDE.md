@@ -1,4 +1,4 @@
-# weekly_report プロジェクトルール
+# action-organizer プロジェクトルール
 
 ## ブランチ・開発フロー
 
@@ -33,9 +33,9 @@ feature/<作業内容>
 ## プロジェクト構成
 
 ```
-weekly_report/
+action-organizer/
 ├── .github/workflows/deploy.yml  # GitHub Actions（masterへのpushで自動デプロイ）
-└── weekly_report_app/            # Flutter アプリ
+└── action_organizer_app/         # Flutter アプリ
     └── lib/main.dart             # メインコード
 ```
 
@@ -43,4 +43,4 @@ weekly_report/
 
 - `master` に merge されると GitHub Actions が自動で Flutter Web をビルド
 - GitHub Pages に自動デプロイされる
-- URL: https://vazaluta.github.io/weekly_report/
+- URL: https://vazaluta.github.io/action-organizer/
