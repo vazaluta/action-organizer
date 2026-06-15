@@ -13,7 +13,7 @@
 #   ↓
 # GitHub Pages が gh-pages ブランチを配信
 #   ↓
-# https://vazaluta.github.io/weekly_report/ でアクセス可能
+# https://vazaluta.github.io/action-organizer/ でアクセス可能
 #
 # ポイント：flutter build web がWebページとして動く形に変換する責任を持ち
 #           GitHub Pages はファイルを配信するだけ。だから不整合が起きない。
@@ -54,7 +54,7 @@ jobs:
       # --base-href はGitHub PagesのサブパスURLに対応するため必要
       # （これがないとJS/CSSのパスがずれて画面が真っ白になる）
       - name: Build Flutter Web
-        run: flutter build web --base-href /weekly_report/
+        run: flutter build web --base-href /action-organizer/
         working-directory: weekly_report_app
 
       # build/web/ の中身をそのままgh-pagesブランチにpush
