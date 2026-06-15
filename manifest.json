@@ -1,6 +1,6 @@
 {
-    "name": "weekly_report_app",
-    "short_name": "weekly_report_app",
+    "name": "action_organizer_app",
+    "short_name": "action_organizer_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
