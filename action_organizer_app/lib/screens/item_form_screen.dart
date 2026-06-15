@@ -5,11 +5,13 @@ import '../models/item.dart';
 class ItemFormScreen extends StatefulWidget {
   final Item? item;
   final ItemCategory initialCategory;
+  final VoidCallback? onDelete;
 
   const ItemFormScreen({
     super.key,
     this.item,
     required this.initialCategory,
+    this.onDelete,
   });
 
   @override
@@ -75,6 +77,33 @@ class _ItemFormScreenState extends State<ItemFormScreen> {
         title: Text(_isEditing ? 'アイテムを編集' : 'アイテムを追加'),
         backgroundColor: colorScheme.inversePrimary,
         actions: [
+          if (_isEditing && widget.onDelete != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              tooltip: '削除',
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('削除しますか？'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('キャンセル'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('削除'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) {
+                  widget.onDelete!();
+                  if (context.mounted) Navigator.of(context).pop();
+                }
+              },
+            ),
           TextButton(
             onPressed: _save,
             child: const Text('保存'),

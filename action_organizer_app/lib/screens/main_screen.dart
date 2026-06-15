@@ -63,12 +63,18 @@ class _MainScreenState extends State<MainScreen>
     }
   }
 
+  Future<void> _deleteItem(Item item) async {
+    setState(() => _items.removeWhere((i) => i.id == item.id));
+    await _saveItems();
+  }
+
   Future<void> _openDetail(Item item) async {
     final updated = await Navigator.of(context).push<Item>(
       MaterialPageRoute(
         builder: (_) => ItemFormScreen(
           item: item,
           initialCategory: item.category,
+          onDelete: () => _deleteItem(item),
         ),
       ),
     );
@@ -106,6 +112,7 @@ class _MainScreenState extends State<MainScreen>
                             .where((i) => i.category == category)
                             .toList(),
                         onTap: _openDetail,
+                        onDelete: _deleteItem,
                       ))
                   .toList(),
             ),
@@ -121,8 +128,13 @@ class _MainScreenState extends State<MainScreen>
 class _ItemListView extends StatelessWidget {
   final List<Item> items;
   final void Function(Item) onTap;
+  final void Function(Item) onDelete;
 
-  const _ItemListView({required this.items, required this.onTap});
+  const _ItemListView({
+    required this.items,
+    required this.onTap,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -159,17 +171,31 @@ class _ItemListView extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
       itemBuilder: (context, index) {
         final item = items[index];
-        return ListTile(
-          title: Text(item.title),
-          subtitle: item.memo != null && item.memo!.isNotEmpty
-              ? Text(
-                  item.memo!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )
-              : null,
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => onTap(item),
+        return Dismissible(
+          key: ValueKey(item.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            color: Theme.of(context).colorScheme.error,
+            child: Icon(
+              Icons.delete,
+              color: Theme.of(context).colorScheme.onError,
+            ),
+          ),
+          onDismissed: (_) => onDelete(item),
+          child: ListTile(
+            title: Text(item.title),
+            subtitle: item.memo != null && item.memo!.isNotEmpty
+                ? Text(
+                    item.memo!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : null,
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => onTap(item),
+          ),
         );
       },
     );
