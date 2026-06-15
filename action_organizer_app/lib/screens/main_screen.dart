@@ -3,7 +3,6 @@ import '../models/item.dart';
 import '../services/storage_service.dart';
 import 'item_detail_screen.dart';
 import 'item_form_screen.dart';
-import 'ai_suggestion_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -86,30 +85,6 @@ class _MainScreenState extends State<MainScreen>
     }
   }
 
-  void _onAiCategoryChanged(Item item, ItemCategory newCategory) {
-    setState(() {
-      final idx = _items.indexWhere((i) => i.id == item.id);
-      if (idx >= 0) {
-        _items[idx] = item.copyWith(
-          category: newCategory,
-          updatedAt: DateTime.now(),
-        );
-      }
-    });
-    _saveItems();
-  }
-
-  void _openAiSuggestions() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => AiSuggestionScreen(
-          items: List.unmodifiable(_items),
-          onCategoryChanged: _onAiCategoryChanged,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -119,13 +94,6 @@ class _MainScreenState extends State<MainScreen>
         backgroundColor: colorScheme.inversePrimary,
         title: const Text('行動整理'),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.auto_awesome),
-            tooltip: 'AI提案',
-            onPressed: _openAiSuggestions,
-          ),
-        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: _tabs
