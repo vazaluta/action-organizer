@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/storage_service.dart';
-import 'item_detail_screen.dart';
 import 'item_form_screen.dart';
-import 'ai_suggestion_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -65,49 +63,27 @@ class _MainScreenState extends State<MainScreen>
     }
   }
 
+  Future<void> _deleteItem(Item item) async {
+    setState(() => _items.removeWhere((i) => i.id == item.id));
+    await _saveItems();
+  }
+
   Future<void> _openDetail(Item item) async {
-    final result = await Navigator.of(context).push<Map<String, dynamic>>(
+    final updated = await Navigator.of(context).push<Item>(
       MaterialPageRoute(
-        builder: (_) => ItemDetailScreen(item: item),
-      ),
-    );
-    if (result == null) return;
-
-    if (result['action'] == 'delete') {
-      setState(() => _items.removeWhere((i) => i.id == item.id));
-      await _saveItems();
-    } else if (result['action'] == 'update') {
-      final updated = result['item'] as Item;
-      setState(() {
-        final idx = _items.indexWhere((i) => i.id == updated.id);
-        if (idx >= 0) _items[idx] = updated;
-      });
-      await _saveItems();
-    }
-  }
-
-  void _onAiCategoryChanged(Item item, ItemCategory newCategory) {
-    setState(() {
-      final idx = _items.indexWhere((i) => i.id == item.id);
-      if (idx >= 0) {
-        _items[idx] = item.copyWith(
-          category: newCategory,
-          updatedAt: DateTime.now(),
-        );
-      }
-    });
-    _saveItems();
-  }
-
-  void _openAiSuggestions() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => AiSuggestionScreen(
-          items: List.unmodifiable(_items),
-          onCategoryChanged: _onAiCategoryChanged,
+        builder: (_) => ItemFormScreen(
+          item: item,
+          initialCategory: item.category,
+          onDelete: () => _deleteItem(item),
         ),
       ),
     );
+    if (updated == null) return;
+    setState(() {
+      final idx = _items.indexWhere((i) => i.id == updated.id);
+      if (idx >= 0) _items[idx] = updated;
+    });
+    await _saveItems();
   }
 
   @override
@@ -119,13 +95,6 @@ class _MainScreenState extends State<MainScreen>
         backgroundColor: colorScheme.inversePrimary,
         title: const Text('行動整理'),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.auto_awesome),
-            tooltip: 'AI提案',
-            onPressed: _openAiSuggestions,
-          ),
-        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: _tabs
@@ -143,6 +112,7 @@ class _MainScreenState extends State<MainScreen>
                             .where((i) => i.category == category)
                             .toList(),
                         onTap: _openDetail,
+                        onDelete: _deleteItem,
                       ))
                   .toList(),
             ),
@@ -158,8 +128,13 @@ class _MainScreenState extends State<MainScreen>
 class _ItemListView extends StatelessWidget {
   final List<Item> items;
   final void Function(Item) onTap;
+  final void Function(Item) onDelete;
 
-  const _ItemListView({required this.items, required this.onTap});
+  const _ItemListView({
+    required this.items,
+    required this.onTap,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -196,17 +171,31 @@ class _ItemListView extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
       itemBuilder: (context, index) {
         final item = items[index];
-        return ListTile(
-          title: Text(item.title),
-          subtitle: item.memo != null && item.memo!.isNotEmpty
-              ? Text(
-                  item.memo!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )
-              : null,
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => onTap(item),
+        return Dismissible(
+          key: ValueKey(item.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            color: Theme.of(context).colorScheme.error,
+            child: Icon(
+              Icons.delete,
+              color: Theme.of(context).colorScheme.onError,
+            ),
+          ),
+          onDismissed: (_) => onDelete(item),
+          child: ListTile(
+            title: Text(item.title),
+            subtitle: item.memo != null && item.memo!.isNotEmpty
+                ? Text(
+                    item.memo!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : null,
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => onTap(item),
+          ),
         );
       },
     );
