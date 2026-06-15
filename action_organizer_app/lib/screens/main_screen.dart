@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/storage_service.dart';
-import 'item_detail_screen.dart';
 import 'item_form_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -65,24 +64,20 @@ class _MainScreenState extends State<MainScreen>
   }
 
   Future<void> _openDetail(Item item) async {
-    final result = await Navigator.of(context).push<Map<String, dynamic>>(
+    final updated = await Navigator.of(context).push<Item>(
       MaterialPageRoute(
-        builder: (_) => ItemDetailScreen(item: item),
+        builder: (_) => ItemFormScreen(
+          item: item,
+          initialCategory: item.category,
+        ),
       ),
     );
-    if (result == null) return;
-
-    if (result['action'] == 'delete') {
-      setState(() => _items.removeWhere((i) => i.id == item.id));
-      await _saveItems();
-    } else if (result['action'] == 'update') {
-      final updated = result['item'] as Item;
-      setState(() {
-        final idx = _items.indexWhere((i) => i.id == updated.id);
-        if (idx >= 0) _items[idx] = updated;
-      });
-      await _saveItems();
-    }
+    if (updated == null) return;
+    setState(() {
+      final idx = _items.indexWhere((i) => i.id == updated.id);
+      if (idx >= 0) _items[idx] = updated;
+    });
+    await _saveItems();
   }
 
   @override
