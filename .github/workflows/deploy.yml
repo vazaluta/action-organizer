@@ -7,7 +7,7 @@
 #   ↓
 # flutter build web でDartコードをJavaScript+HTML一式に変換
 #   ↓
-# weekly_report_app/build/web/ にWebページとして動くファイル一式が生成される
+# action_organizer_app/build/web/ にWebページとして動くファイル一式が生成される
 #   ↓
 # peaceiris/actions-gh-pages が build/web/ の中身を gh-pages ブランチに push
 #   ↓
@@ -48,14 +48,14 @@ jobs:
       # Flutterの依存パッケージをインストール
       - name: Install dependencies
         run: flutter pub get
-        working-directory: weekly_report_app
+        working-directory: action_organizer_app
 
       # flutter build web でDartコードをJS+HTML一式に変換
       # --base-href はGitHub PagesのサブパスURLに対応するため必要
       # （これがないとJS/CSSのパスがずれて画面が真っ白になる）
       - name: Build Flutter Web
         run: flutter build web --base-href /action-organizer/
-        working-directory: weekly_report_app
+        working-directory: action_organizer_app
 
       # build/web/ の中身をそのままgh-pagesブランチにpush
       # masterのソースコードは含まれず、ビルド成果物だけが入る
@@ -64,4 +64,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: weekly_report_app/build/web
+          publish_dir: action_organizer_app/build/web
