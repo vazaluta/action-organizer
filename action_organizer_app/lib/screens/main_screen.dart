@@ -86,6 +86,14 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
+  Future<void> _updateItem(Item item) async {
+    setState(() {
+      final idx = _items.indexWhere((i) => i.id == item.id);
+      if (idx >= 0) _items[idx] = item;
+    });
+    await _saveItems();
+  }
+
   Future<void> _openDetail(Item item) async {
     final updated = await Navigator.of(context).push<Item>(
       MaterialPageRoute(
@@ -129,8 +137,10 @@ class _MainScreenState extends State<MainScreen>
                         items: _items
                             .where((i) => i.category == category)
                             .toList(),
+                        category: category,
                         onTap: _openDetail,
                         onDelete: _deleteItem,
+                        onUpdate: _updateItem,
                       ))
                   .toList(),
             ),
@@ -145,14 +155,107 @@ class _MainScreenState extends State<MainScreen>
 
 class _ItemListView extends StatelessWidget {
   final List<Item> items;
+  final ItemCategory category;
   final void Function(Item) onTap;
   final void Function(Item) onDelete;
+  final void Function(Item) onUpdate;
 
   const _ItemListView({
     required this.items,
+    required this.category,
     required this.onTap,
     required this.onDelete,
+    required this.onUpdate,
   });
+
+  Future<void> _showProgressDialog(BuildContext context, Item item) async {
+    double progress = item.progress.toDouble();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(item.title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('進捗: ${progress.round()}%'),
+              Slider(
+                value: progress,
+                min: 0,
+                max: 100,
+                divisions: 20,
+                label: '${progress.round()}%',
+                onChanged: (v) => setDialogState(() => progress = v),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () {
+                onUpdate(item.copyWith(progress: progress.round()));
+                Navigator.of(ctx).pop();
+              },
+              child: const Text('保存'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrailing(BuildContext context, Item item) {
+    switch (item.category) {
+      case ItemCategory.routine:
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${item.count}回',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline),
+              tooltip: 'カウント',
+              onPressed: () => onUpdate(item.copyWith(count: item.count + 1)),
+            ),
+          ],
+        );
+      case ItemCategory.task:
+        return const Icon(Icons.chevron_right);
+      case ItemCategory.hobby:
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${item.progress}%',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                SizedBox(
+                  width: 48,
+                  child: LinearProgressIndicator(
+                    value: item.progress / 100,
+                    minHeight: 6,
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              icon: const Icon(Icons.tune),
+              tooltip: '進捗を更新',
+              onPressed: () => _showProgressDialog(context, item),
+            ),
+          ],
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +292,35 @@ class _ItemListView extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
       itemBuilder: (context, index) {
         final item = items[index];
+        final doneToday = item.isDoneToday;
+        final taskDone = item.isDone;
+
+        Widget? leading;
+        if (item.category == ItemCategory.routine) {
+          leading = Checkbox(
+            value: doneToday,
+            onChanged: (_) => onUpdate(
+              doneToday
+                  ? item.copyWith(resetLastDoneDate: true)
+                  : item.copyWith(lastDoneDate: DateTime.now()),
+            ),
+          );
+        } else if (item.category == ItemCategory.task) {
+          leading = Checkbox(
+            value: taskDone,
+            onChanged: (_) => onUpdate(item.copyWith(isDone: !taskDone)),
+          );
+        }
+
+        final titleStyle =
+            (item.category == ItemCategory.routine && doneToday) ||
+                    (item.category == ItemCategory.task && taskDone)
+                ? TextStyle(
+                    decoration: TextDecoration.lineThrough,
+                    color: Theme.of(context).colorScheme.outline,
+                  )
+                : null;
+
         return Dismissible(
           key: ValueKey(item.id),
           direction: DismissDirection.endToStart,
@@ -203,7 +335,8 @@ class _ItemListView extends StatelessWidget {
           ),
           onDismissed: (_) => onDelete(item),
           child: ListTile(
-            title: Text(item.title),
+            leading: leading,
+            title: Text(item.title, style: titleStyle),
             subtitle: item.memo != null && item.memo!.isNotEmpty
                 ? Text(
                     item.memo!,
@@ -211,7 +344,7 @@ class _ItemListView extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   )
                 : null,
-            trailing: const Icon(Icons.chevron_right),
+            trailing: _buildTrailing(context, item),
             onTap: () => onTap(item),
           ),
         );
