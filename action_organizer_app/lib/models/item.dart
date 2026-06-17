@@ -54,6 +54,16 @@ class Item {
     this.progress = 0,
   });
 
+  // Hobby: count 0=Lv0, 1-4=Lv1, 5-9=Lv2, 10-19=Lv3, 20-49=Lv4, 50+=Lv5
+  int get hobbyLevel {
+    if (count == 0) return 0;
+    if (count < 5) return 1;
+    if (count < 10) return 2;
+    if (count < 20) return 3;
+    if (count < 50) return 4;
+    return 5;
+  }
+
   bool get isDoneToday {
     if (lastDoneDate == null) return false;
     final today = DateTime.now();

@@ -198,7 +198,34 @@ class _ItemListView extends StatelessWidget {
         onPressed = () => onUpdate(item.copyWith(isDone: !item.isDone));
         break;
       case ItemCategory.hobby:
-        onPressed = () => onTap(item);
+        final level = item.hobbyLevel;
+        avatar = Icon(
+          level == 0
+              ? Icons.star_border
+              : level <= 2
+                  ? Icons.star_half
+                  : Icons.star,
+          size: 18,
+        );
+        if (item.count > 0) {
+          labelText = '${item.title}  Lv.$level  ×${item.count}';
+        }
+        onPressed = () {
+          final newItem = item.copyWith(
+            count: item.count + 1,
+            updatedAt: DateTime.now(),
+          );
+          onUpdate(newItem);
+          if (newItem.hobbyLevel > level) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  '${item.title} が Lv.${newItem.hobbyLevel} に上がりました！',
+                ),
+              ),
+            );
+          }
+        };
         break;
     }
 
