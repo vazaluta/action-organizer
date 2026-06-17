@@ -207,54 +207,55 @@ class _ItemListView extends StatelessWidget {
     );
   }
 
-  Widget _buildTrailing(BuildContext context, Item item) {
+  Widget _buildChip(BuildContext context, Item item) {
+    Widget? avatar;
+    String labelText = item.title;
+    bool selected = false;
+    VoidCallback? onPressed;
+
     switch (item.category) {
       case ItemCategory.routine:
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '${item.count}回',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              tooltip: 'カウント',
-              onPressed: () => onUpdate(item.copyWith(count: item.count + 1)),
-            ),
-          ],
+        final done = item.isDoneToday;
+        avatar = Icon(
+          done ? Icons.check_circle : Icons.radio_button_unchecked,
+          size: 18,
         );
+        if (item.count > 0) labelText = '${item.title}  ×${item.count}';
+        selected = done;
+        onPressed = () => onUpdate(
+              done
+                  ? item.copyWith(resetLastDoneDate: true)
+                  : item.copyWith(lastDoneDate: DateTime.now()),
+            );
+        break;
       case ItemCategory.task:
-        return const Icon(Icons.chevron_right);
-      case ItemCategory.hobby:
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${item.progress}%',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                SizedBox(
-                  width: 48,
-                  child: LinearProgressIndicator(
-                    value: item.progress / 100,
-                    minHeight: 6,
-                  ),
-                ),
-              ],
-            ),
-            IconButton(
-              icon: const Icon(Icons.tune),
-              tooltip: '進捗を更新',
-              onPressed: () => _showProgressDialog(context, item),
-            ),
-          ],
+        avatar = Icon(
+          item.isDone ? Icons.check_box : Icons.check_box_outline_blank,
+          size: 18,
         );
+        selected = item.isDone;
+        onPressed = () => onUpdate(item.copyWith(isDone: !item.isDone));
+        break;
+      case ItemCategory.hobby:
+        labelText = item.progress > 0
+            ? '${item.title}  ${item.progress}%'
+            : item.title;
+        selected = item.progress == 100;
+        onPressed = () => _showProgressDialog(context, item);
+        break;
     }
+
+    return GestureDetector(
+      onLongPress: () => onTap(item),
+      child: InputChip(
+        avatar: avatar,
+        label: Text(labelText),
+        selected: selected,
+        onPressed: onPressed,
+        onDeleted: () => onDelete(item),
+        deleteIcon: const Icon(Icons.close, size: 16),
+      ),
+    );
   }
 
   @override
@@ -286,69 +287,13 @@ class _ItemListView extends StatelessWidget {
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, indent: 16),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        final doneToday = item.isDoneToday;
-        final taskDone = item.isDone;
-
-        Widget? leading;
-        if (item.category == ItemCategory.routine) {
-          leading = Checkbox(
-            value: doneToday,
-            onChanged: (_) => onUpdate(
-              doneToday
-                  ? item.copyWith(resetLastDoneDate: true)
-                  : item.copyWith(lastDoneDate: DateTime.now()),
-            ),
-          );
-        } else if (item.category == ItemCategory.task) {
-          leading = Checkbox(
-            value: taskDone,
-            onChanged: (_) => onUpdate(item.copyWith(isDone: !taskDone)),
-          );
-        }
-
-        final titleStyle =
-            (item.category == ItemCategory.routine && doneToday) ||
-                    (item.category == ItemCategory.task && taskDone)
-                ? TextStyle(
-                    decoration: TextDecoration.lineThrough,
-                    color: Theme.of(context).colorScheme.outline,
-                  )
-                : null;
-
-        return Dismissible(
-          key: ValueKey(item.id),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            color: Theme.of(context).colorScheme.error,
-            child: Icon(
-              Icons.delete,
-              color: Theme.of(context).colorScheme.onError,
-            ),
-          ),
-          onDismissed: (_) => onDelete(item),
-          child: ListTile(
-            leading: leading,
-            title: Text(item.title, style: titleStyle),
-            subtitle: item.memo != null && item.memo!.isNotEmpty
-                ? Text(
-                    item.memo!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                : null,
-            trailing: _buildTrailing(context, item),
-            onTap: () => onTap(item),
-          ),
-        );
-      },
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: items.map((item) => _buildChip(context, item)).toList(),
+      ),
     );
   }
 }
