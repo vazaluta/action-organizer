@@ -38,8 +38,8 @@ class Item {
   final int count;
   // Task: 完了状態
   final bool isDone;
-  // Hobby: 進捗 0-100
-  final int progress;
+  // Hobby: 累計経験値（タップ+10 / 達成記録+20 / 100で1レベルアップ）
+  final int xp;
 
   const Item({
     required this.id,
@@ -51,8 +51,28 @@ class Item {
     this.lastDoneDate,
     this.count = 0,
     this.isDone = false,
-    this.progress = 0,
+    this.xp = 0,
   });
+
+  // Hobby: XP 100ごとに1レベル、上限Lv.999
+  int get hobbyLevel => (xp ~/ 100).clamp(0, 999);
+  int get hobbyXpInLevel => xp % 100;
+  bool get isHobbyAtMax => xp ~/ 100 >= 999;
+
+  String get hobbyRankName {
+    final lv = hobbyLevel;
+    if (lv >= 100) return '横綱';
+    if (lv >= 90) return '大関';
+    if (lv >= 80) return '関脇';
+    if (lv >= 70) return '小結';
+    if (lv >= 60) return '前頭';
+    if (lv >= 50) return '十両';
+    if (lv >= 40) return '幕下';
+    if (lv >= 30) return '三段目';
+    if (lv >= 20) return '序二段';
+    if (lv >= 10) return '序ノ口';
+    return '前相撲';
+  }
 
   bool get isDoneToday {
     if (lastDoneDate == null) return false;
@@ -71,7 +91,7 @@ class Item {
     bool resetLastDoneDate = false,
     int? count,
     bool? isDone,
-    int? progress,
+    int? xp,
   }) {
     return Item(
       id: id,
@@ -84,7 +104,7 @@ class Item {
           resetLastDoneDate ? null : (lastDoneDate ?? this.lastDoneDate),
       count: count ?? this.count,
       isDone: isDone ?? this.isDone,
-      progress: progress ?? this.progress,
+      xp: xp ?? this.xp,
     );
   }
 
@@ -98,7 +118,7 @@ class Item {
         'lastDoneDate': lastDoneDate?.toIso8601String(),
         'count': count,
         'isDone': isDone,
-        'progress': progress,
+        'xp': xp,
       };
 
   factory Item.fromJson(Map<String, dynamic> json) => Item(
@@ -113,7 +133,7 @@ class Item {
             : null,
         count: (json['count'] as int?) ?? 0,
         isDone: (json['isDone'] as bool?) ?? false,
-        progress: (json['progress'] as int?) ?? 0,
+        xp: (json['xp'] as int?) ?? 0,
       );
 
   static List<Item> listFromJson(String source) {

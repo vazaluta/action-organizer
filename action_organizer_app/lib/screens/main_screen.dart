@@ -168,94 +168,172 @@ class _ItemListView extends StatelessWidget {
     required this.onUpdate,
   });
 
-  Future<void> _showProgressDialog(BuildContext context, Item item) async {
-    double progress = item.progress.toDouble();
-    await showDialog<void>(
+  Future<void> _showAchievementDialog(BuildContext context, Item item) async {
+    final controller = TextEditingController();
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(item.title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('進捗: ${progress.round()}%'),
-              Slider(
-                value: progress,
-                min: 0,
-                max: 100,
-                divisions: 20,
-                label: '${progress.round()}%',
-                onChanged: (v) => setDialogState(() => progress = v),
-              ),
-            ],
+          title: const Text('達成したことを記録'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: '何を達成しましたか？',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (_) => setDialogState(() {}),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
+              onPressed: () => Navigator.of(ctx).pop(false),
               child: const Text('キャンセル'),
             ),
             FilledButton(
-              onPressed: () {
-                onUpdate(item.copyWith(progress: progress.round()));
-                Navigator.of(ctx).pop();
-              },
-              child: const Text('保存'),
+              onPressed: controller.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.of(ctx).pop(true),
+              child: const Text('記録する (+20 XP)'),
             ),
           ],
         ),
       ),
     );
+    final text = controller.text.trim();
+    controller.dispose();
+    if (confirmed != true || !context.mounted) return;
+
+    final now = DateTime.now();
+    final entry = '[${now.month}/${now.day}] $text';
+    final newMemo = (item.memo == null || item.memo!.isEmpty)
+        ? entry
+        : '${item.memo}\n$entry';
+    final newItem = item.copyWith(
+      xp: item.xp + 20,
+      memo: newMemo,
+      updatedAt: now,
+    );
+    onUpdate(newItem);
+
+    if (!context.mounted) return;
+    if (newItem.hobbyRankName != item.hobbyRankName) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${item.title} が ${newItem.hobbyRankName} Lv.${newItem.hobbyLevel} に昇進しました！',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${item.title} の達成を記録しました！ +20 XP')),
+      );
+    }
   }
 
-  Widget _buildChip(BuildContext context, Item item) {
-    Widget? avatar;
-    String labelText = item.title;
-    bool selected = false;
-    VoidCallback? onPressed;
+  Widget _buildListTile(BuildContext context, Item item) {
+    final colorScheme = Theme.of(context).colorScheme;
 
     switch (item.category) {
       case ItemCategory.routine:
         final done = item.isDoneToday;
-        avatar = Icon(
-          done ? Icons.check_circle : Icons.radio_button_unchecked,
-          size: 18,
+        return ListTile(
+          leading: Icon(
+            done ? Icons.check_circle : Icons.radio_button_unchecked,
+            color: done ? colorScheme.primary : colorScheme.outline,
+          ),
+          title: Text(
+            item.count > 0 ? '${item.title}  ×${item.count}' : item.title,
+          ),
+          onTap: () => onUpdate(
+            done
+                ? item.copyWith(resetLastDoneDate: true)
+                : item.copyWith(lastDoneDate: DateTime.now()),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => onTap(item),
+          ),
         );
-        if (item.count > 0) labelText = '${item.title}  ×${item.count}';
-        selected = done;
-        onPressed = () => onUpdate(
-              done
-                  ? item.copyWith(resetLastDoneDate: true)
-                  : item.copyWith(lastDoneDate: DateTime.now()),
-            );
-        break;
-      case ItemCategory.task:
-        avatar = Icon(
-          item.isDone ? Icons.check_box : Icons.check_box_outline_blank,
-          size: 18,
-        );
-        selected = item.isDone;
-        onPressed = () => onUpdate(item.copyWith(isDone: !item.isDone));
-        break;
-      case ItemCategory.hobby:
-        labelText = item.progress > 0
-            ? '${item.title}  ${item.progress}%'
-            : item.title;
-        selected = item.progress == 100;
-        onPressed = () => _showProgressDialog(context, item);
-        break;
-    }
 
-    return GestureDetector(
-      onLongPress: () => onTap(item),
-      child: InputChip(
-        avatar: avatar,
-        label: Text(labelText),
-        selected: selected,
-        onPressed: onPressed,
-        onDeleted: () => onDelete(item),
-        deleteIcon: const Icon(Icons.close, size: 16),
-      ),
-    );
+      case ItemCategory.task:
+        return ListTile(
+          leading: Icon(
+            item.isDone ? Icons.check_box : Icons.check_box_outline_blank,
+            color: item.isDone ? colorScheme.primary : colorScheme.outline,
+          ),
+          title: Text(
+            item.title,
+            style: item.isDone
+                ? TextStyle(
+                    decoration: TextDecoration.lineThrough,
+                    color: colorScheme.outline,
+                  )
+                : null,
+          ),
+          onTap: () => onUpdate(item.copyWith(isDone: !item.isDone)),
+          trailing: IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => onTap(item),
+          ),
+        );
+
+      case ItemCategory.hobby:
+        final level = item.hobbyLevel;
+        final isMax = item.isHobbyAtMax;
+        final levelLabel = isMax ? 'Lv.999+' : 'Lv.$level';
+        final xpLabel = isMax ? '' : '  ${item.hobbyXpInLevel}/100 XP';
+        return ListTile(
+          title: Text(item.title),
+          subtitle: (level > 0 || isMax)
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${item.hobbyRankName}  $levelLabel$xpLabel'),
+                    const SizedBox(height: 4),
+                    LinearProgressIndicator(
+                      value: isMax ? 1.0 : item.hobbyXpInLevel / 100,
+                    ),
+                  ],
+                )
+              : null,
+          onTap: isMax
+              ? null
+              : () {
+                  final newItem = item.copyWith(
+                    xp: item.xp + 10,
+                    updatedAt: DateTime.now(),
+                  );
+                  onUpdate(newItem);
+                  if (newItem.hobbyRankName != item.hobbyRankName) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          '${item.title} が ${newItem.hobbyRankName} Lv.${newItem.hobbyLevel} に昇進しました！',
+                        ),
+                      ),
+                    );
+                  }
+                },
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isMax)
+                IconButton(
+                  icon: const Icon(Icons.edit_note),
+                  tooltip: '達成したことを記録 (+20 XP)',
+                  onPressed: () => _showAchievementDialog(context, item),
+                ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: '編集',
+                onPressed: () => onTap(item),
+              ),
+            ],
+          ),
+        );
+    }
   }
 
   @override
@@ -287,13 +365,11 @@ class _ItemListView extends StatelessWidget {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: items.map((item) => _buildChip(context, item)).toList(),
-      ),
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (_, index) => _buildListTile(context, items[index]),
     );
   }
 }
