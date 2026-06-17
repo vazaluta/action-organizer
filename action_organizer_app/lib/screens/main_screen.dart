@@ -202,13 +202,15 @@ class _ItemListView extends StatelessWidget {
         avatar = Icon(
           level == 0
               ? Icons.star_border
-              : level <= 2
+              : level <= 4
                   ? Icons.star_half
-                  : Icons.star,
+                  : level < 10
+                      ? Icons.star
+                      : Icons.emoji_events,
           size: 18,
         );
         if (item.count > 0) {
-          labelText = '${item.title}  Lv.$level  ×${item.count}';
+          labelText = '${item.title}  ${item.hobbyRankName}  ×${item.count}';
         }
         onPressed = () {
           final newItem = item.copyWith(
@@ -220,7 +222,7 @@ class _ItemListView extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  '${item.title} が Lv.${newItem.hobbyLevel} に上がりました！',
+                  '${item.title} が ${newItem.hobbyRankName} に昇進しました！',
                 ),
               ),
             );
