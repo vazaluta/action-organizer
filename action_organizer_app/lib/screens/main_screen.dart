@@ -168,45 +168,6 @@ class _ItemListView extends StatelessWidget {
     required this.onUpdate,
   });
 
-  Future<void> _showProgressDialog(BuildContext context, Item item) async {
-    double progress = item.progress.toDouble();
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(item.title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('進捗: ${progress.round()}%'),
-              Slider(
-                value: progress,
-                min: 0,
-                max: 100,
-                divisions: 20,
-                label: '${progress.round()}%',
-                onChanged: (v) => setDialogState(() => progress = v),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('キャンセル'),
-            ),
-            FilledButton(
-              onPressed: () {
-                onUpdate(item.copyWith(progress: progress.round()));
-                Navigator.of(ctx).pop();
-              },
-              child: const Text('保存'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildChip(BuildContext context, Item item) {
     Widget? avatar;
     String labelText = item.title;
@@ -237,11 +198,7 @@ class _ItemListView extends StatelessWidget {
         onPressed = () => onUpdate(item.copyWith(isDone: !item.isDone));
         break;
       case ItemCategory.hobby:
-        labelText = item.progress > 0
-            ? '${item.title}  ${item.progress}%'
-            : item.title;
-        selected = item.progress == 100;
-        onPressed = () => _showProgressDialog(context, item);
+        onPressed = () => onTap(item);
         break;
     }
 
