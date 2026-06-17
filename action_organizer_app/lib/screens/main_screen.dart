@@ -168,6 +168,99 @@ class _ItemListView extends StatelessWidget {
     required this.onUpdate,
   });
 
+  Future<void> _showHobbyOptions(BuildContext context, Item item) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_note),
+              title: const Text('達成したことを記録 (+20 XP)'),
+              onTap: () => Navigator.of(ctx).pop('achievement'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('アイテムを編集'),
+              onTap: () => Navigator.of(ctx).pop('edit'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted) return;
+    if (action == 'achievement') {
+      await _showAchievementDialog(context, item);
+    } else if (action == 'edit') {
+      onTap(item);
+    }
+  }
+
+  Future<void> _showAchievementDialog(BuildContext context, Item item) async {
+    final controller = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('達成したことを記録'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              hintText: '何を達成しましたか？',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (_) => setDialogState(() {}),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: controller.text.trim().isEmpty
+                  ? null
+                  : () => Navigator.of(ctx).pop(true),
+              child: const Text('記録する (+20 XP)'),
+            ),
+          ],
+        ),
+      ),
+    );
+    final text = controller.text.trim();
+    controller.dispose();
+    if (confirmed != true || !context.mounted) return;
+
+    final now = DateTime.now();
+    final entry = '[${now.month}/${now.day}] $text';
+    final newMemo = (item.memo == null || item.memo!.isEmpty)
+        ? entry
+        : '${item.memo}\n$entry';
+    final newItem = item.copyWith(
+      xp: item.xp + 20,
+      memo: newMemo,
+      updatedAt: now,
+    );
+    onUpdate(newItem);
+
+    if (!context.mounted) return;
+    if (newItem.hobbyRankName != item.hobbyRankName) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${item.title} が ${newItem.hobbyRankName} Lv.${newItem.hobbyLevel} に昇進しました！',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${item.title} の達成を記録しました！ +20 XP')),
+      );
+    }
+  }
+
   Widget _buildChip(BuildContext context, Item item) {
     Widget? avatar;
     String labelText = item.title;
@@ -207,7 +300,7 @@ class _ItemListView extends StatelessWidget {
             ? null
             : () {
                 final newItem = item.copyWith(
-                  count: item.count + 1,
+                  xp: item.xp + 10,
                   updatedAt: DateTime.now(),
                 );
                 onUpdate(newItem);
@@ -215,7 +308,7 @@ class _ItemListView extends StatelessWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        '${item.title} が ${newItem.hobbyRankName} に昇進しました！',
+                        '${item.title} が ${newItem.hobbyRankName} Lv.${newItem.hobbyLevel} に昇進しました！',
                       ),
                     ),
                   );
@@ -225,7 +318,9 @@ class _ItemListView extends StatelessWidget {
     }
 
     return GestureDetector(
-      onLongPress: () => onTap(item),
+      onLongPress: () => item.category == ItemCategory.hobby
+          ? _showHobbyOptions(context, item)
+          : onTap(item),
       child: InputChip(
         avatar: avatar,
         label: Text(labelText),
