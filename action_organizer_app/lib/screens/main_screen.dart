@@ -286,18 +286,16 @@ class _ItemListView extends StatelessWidget {
         final xpLabel = isMax ? '' : '  ${item.hobbyXpInLevel}/100 XP';
         return ListTile(
           title: Text(item.title),
-          subtitle: (level > 0 || isMax)
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${item.hobbyRankName}  $levelLabel$xpLabel'),
-                    const SizedBox(height: 4),
-                    LinearProgressIndicator(
-                      value: isMax ? 1.0 : item.hobbyXpInLevel / 100,
-                    ),
-                  ],
-                )
-              : null,
+          subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${item.hobbyRankName}  $levelLabel$xpLabel'),
+                  const SizedBox(height: 4),
+                  LinearProgressIndicator(
+                    value: isMax ? 1.0 : item.hobbyXpInLevel / 100,
+                  ),
+                ],
+              ),
           onTap: isMax
               ? null
               : () {
