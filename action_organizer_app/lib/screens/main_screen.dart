@@ -199,20 +199,11 @@ class _ItemListView extends StatelessWidget {
         break;
       case ItemCategory.hobby:
         final level = item.hobbyLevel;
-        avatar = Icon(
-          level == 0
-              ? Icons.star_border
-              : level < 50
-                  ? Icons.star_half
-                  : level < 100
-                      ? Icons.star
-                      : Icons.emoji_events,
-          size: 18,
-        );
-        if (level > 0) {
-          labelText = '${item.title}  ${item.hobbyRankName}  Lv.$level';
+        final levelLabel = item.isHobbyAtMax ? 'Lv.999+' : 'Lv.$level';
+        if (level > 0 || item.isHobbyAtMax) {
+          labelText = '${item.title}  ${item.hobbyRankName}  $levelLabel';
         }
-        onPressed = level >= 100
+        onPressed = item.isHobbyAtMax
             ? null
             : () {
                 final newItem = item.copyWith(

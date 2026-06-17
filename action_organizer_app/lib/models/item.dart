@@ -54,8 +54,10 @@ class Item {
     this.progress = 0,
   });
 
-  // Hobby: Lv.1-100 (1タップ=1レベル、上限100)。10ごとに階級が上がる
-  int get hobbyLevel => count.clamp(0, 100);
+  // Hobby: 1タップ=Lv.+1。Lv.999まで上昇し、それ以上はLv.999+で停止
+  int get hobbyLevel => count.clamp(0, 999);
+
+  bool get isHobbyAtMax => count >= 1000;
 
   String get hobbyRankName {
     final lv = hobbyLevel;
