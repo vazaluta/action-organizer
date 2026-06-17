@@ -202,32 +202,34 @@ class _ItemListView extends StatelessWidget {
         avatar = Icon(
           level == 0
               ? Icons.star_border
-              : level <= 4
+              : level < 50
                   ? Icons.star_half
-                  : level < 10
+                  : level < 100
                       ? Icons.star
                       : Icons.emoji_events,
           size: 18,
         );
-        if (item.count > 0) {
-          labelText = '${item.title}  ${item.hobbyRankName}  ×${item.count}';
+        if (level > 0) {
+          labelText = '${item.title}  ${item.hobbyRankName}  Lv.$level';
         }
-        onPressed = () {
-          final newItem = item.copyWith(
-            count: item.count + 1,
-            updatedAt: DateTime.now(),
-          );
-          onUpdate(newItem);
-          if (newItem.hobbyLevel > level) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '${item.title} が ${newItem.hobbyRankName} に昇進しました！',
-                ),
-              ),
-            );
-          }
-        };
+        onPressed = level >= 100
+            ? null
+            : () {
+                final newItem = item.copyWith(
+                  count: item.count + 1,
+                  updatedAt: DateTime.now(),
+                );
+                onUpdate(newItem);
+                if (newItem.hobbyRankName != item.hobbyRankName) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '${item.title} が ${newItem.hobbyRankName} に昇進しました！',
+                      ),
+                    ),
+                  );
+                }
+              };
         break;
     }
 

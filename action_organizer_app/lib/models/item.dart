@@ -54,33 +54,22 @@ class Item {
     this.progress = 0,
   });
 
-  // Hobby: count 0=前相撲, 1=序ノ口, 3=序二段, 5=三段目, 10=幕下, 20=十両, 30=前頭, 50=小結, 75=関脇, 100=大関, 150=横綱
-  String get hobbyRankName {
-    if (count >= 150) return '横綱';
-    if (count >= 100) return '大関';
-    if (count >= 75) return '関脇';
-    if (count >= 50) return '小結';
-    if (count >= 30) return '前頭';
-    if (count >= 20) return '十両';
-    if (count >= 10) return '幕下';
-    if (count >= 5) return '三段目';
-    if (count >= 3) return '序二段';
-    if (count >= 1) return '序ノ口';
-    return '前相撲';
-  }
+  // Hobby: Lv.1-100 (1タップ=1レベル、上限100)。10ごとに階級が上がる
+  int get hobbyLevel => count.clamp(0, 100);
 
-  int get hobbyLevel {
-    if (count >= 150) return 10;
-    if (count >= 100) return 9;
-    if (count >= 75) return 8;
-    if (count >= 50) return 7;
-    if (count >= 30) return 6;
-    if (count >= 20) return 5;
-    if (count >= 10) return 4;
-    if (count >= 5) return 3;
-    if (count >= 3) return 2;
-    if (count >= 1) return 1;
-    return 0;
+  String get hobbyRankName {
+    final lv = hobbyLevel;
+    if (lv >= 100) return '横綱';
+    if (lv >= 90) return '大関';
+    if (lv >= 80) return '関脇';
+    if (lv >= 70) return '小結';
+    if (lv >= 60) return '前頭';
+    if (lv >= 50) return '十両';
+    if (lv >= 40) return '幕下';
+    if (lv >= 30) return '三段目';
+    if (lv >= 20) return '序二段';
+    if (lv >= 10) return '序ノ口';
+    return '前相撲';
   }
 
   bool get isDoneToday {
