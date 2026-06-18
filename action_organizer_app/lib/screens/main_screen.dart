@@ -218,13 +218,9 @@ class _ItemListView extends StatelessWidget {
 
     if (!context.mounted) return;
     if (newItem.hobbyRankName != item.hobbyRankName) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${item.title} が ${newItem.hobbyRankName} Lv.${newItem.hobbyLevel} に昇進しました！',
-          ),
-        ),
-      );
+      _showRankUpOverlay(context, item.title, newItem.hobbyRankName, newItem.hobbyLevel);
+    } else if (newItem.hobbyLevel != item.hobbyLevel) {
+      _showLevelUpOverlay(context, newItem.hobbyLevel);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${item.title} の達成を記録しました！ +20 XP')),
@@ -287,15 +283,15 @@ class _ItemListView extends StatelessWidget {
         return ListTile(
           title: Text(item.title),
           subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${item.hobbyRankName}  $levelLabel$xpLabel'),
-                  const SizedBox(height: 4),
-                  LinearProgressIndicator(
-                    value: isMax ? 1.0 : item.hobbyXpInLevel / 100,
-                  ),
-                ],
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${item.hobbyRankName}  $levelLabel$xpLabel'),
+              const SizedBox(height: 4),
+              LinearProgressIndicator(
+                value: isMax ? 1.0 : item.hobbyXpInLevel / 100,
               ),
+            ],
+          ),
           onTap: isMax
               ? null
               : () {
@@ -305,13 +301,9 @@ class _ItemListView extends StatelessWidget {
                   );
                   onUpdate(newItem);
                   if (newItem.hobbyRankName != item.hobbyRankName) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '${item.title} が ${newItem.hobbyRankName} Lv.${newItem.hobbyLevel} に昇進しました！',
-                        ),
-                      ),
-                    );
+                    _showRankUpOverlay(context, item.title, newItem.hobbyRankName, newItem.hobbyLevel);
+                  } else if (newItem.hobbyLevel != item.hobbyLevel) {
+                    _showLevelUpOverlay(context, newItem.hobbyLevel);
                   }
                 },
           trailing: Row(
@@ -368,6 +360,235 @@ class _ItemListView extends StatelessWidget {
       itemCount: items.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (_, index) => _buildListTile(context, items[index]),
+    );
+  }
+}
+
+void _showLevelUpOverlay(BuildContext context, int level) {
+  showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: '',
+    barrierColor: Colors.black38,
+    transitionDuration: const Duration(milliseconds: 350),
+    pageBuilder: (_, __, ___) => _LevelUpOverlay(level: level),
+    transitionBuilder: (_, anim, __, child) => ScaleTransition(
+      scale: CurvedAnimation(parent: anim, curve: Curves.elasticOut),
+      child: FadeTransition(opacity: anim, child: child),
+    ),
+  );
+}
+
+void _showRankUpOverlay(BuildContext context, String itemTitle, String rankName, int level) {
+  showGeneralDialog<void>(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: '',
+    barrierColor: Colors.black54,
+    transitionDuration: const Duration(milliseconds: 450),
+    pageBuilder: (_, __, ___) => _RankUpOverlay(
+      itemTitle: itemTitle,
+      rankName: rankName,
+      level: level,
+    ),
+    transitionBuilder: (_, anim, __, child) => ScaleTransition(
+      scale: CurvedAnimation(parent: anim, curve: Curves.elasticOut),
+      child: FadeTransition(opacity: anim, child: child),
+    ),
+  );
+}
+
+class _LevelUpOverlay extends StatefulWidget {
+  final int level;
+  const _LevelUpOverlay({required this.level});
+
+  @override
+  State<_LevelUpOverlay> createState() => _LevelUpOverlayState();
+}
+
+class _LevelUpOverlayState extends State<_LevelUpOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _spin;
+
+  @override
+  void initState() {
+    super.initState();
+    _spin = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    )..forward();
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (mounted) Navigator.of(context).maybePop();
+    });
+  }
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.primary.withOpacity(0.5),
+                blurRadius: 24,
+                spreadRadius: 4,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RotationTransition(
+                turns: CurvedAnimation(parent: _spin, curve: Curves.easeOut),
+                child: const Icon(Icons.star, size: 56, color: Colors.amber),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'レベルアップ！',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Lv.${widget.level}',
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RankUpOverlay extends StatefulWidget {
+  final String itemTitle;
+  final String rankName;
+  final int level;
+  const _RankUpOverlay({
+    required this.itemTitle,
+    required this.rankName,
+    required this.level,
+  });
+
+  @override
+  State<_RankUpOverlay> createState() => _RankUpOverlayState();
+}
+
+class _RankUpOverlayState extends State<_RankUpOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulse;
+  late Animation<double> _glow;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _glow = Tween<double>(begin: 8.0, end: 28.0).animate(
+      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
+    );
+    Future.delayed(const Duration(milliseconds: 3000), () {
+      if (mounted) Navigator.of(context).maybePop();
+    });
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).maybePop(),
+      behavior: HitTestBehavior.translucent,
+      child: Center(
+        child: AnimatedBuilder(
+          animation: _glow,
+          builder: (context, child) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 36),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFA0522D), Color(0xFFDAA520), Color(0xFFFFD700)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.amber.withOpacity(0.7),
+                  blurRadius: _glow.value,
+                  spreadRadius: _glow.value / 3,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.military_tech, size: 48, color: Colors.white),
+                const SizedBox(height: 8),
+                const Text(
+                  '昇進！',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.itemTitle,
+                  style: const TextStyle(fontSize: 14, color: Colors.white70),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  widget.rankName,
+                  style: const TextStyle(
+                    fontSize: 52,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Lv.${widget.level}',
+                  style: const TextStyle(fontSize: 20, color: Colors.white70),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'タップして閉じる',
+                  style: TextStyle(fontSize: 12, color: Colors.white54),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
