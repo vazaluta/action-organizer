@@ -61,16 +61,16 @@ class Item {
 
   String get hobbyRankName {
     final lv = hobbyLevel;
-    if (lv >= 101) return '横綱';
-    if (lv >= 91) return '大関';
-    if (lv >= 81) return '関脇';
-    if (lv >= 71) return '小結';
-    if (lv >= 61) return '前頭';
-    if (lv >= 51) return '十両';
-    if (lv >= 41) return '幕下';
-    if (lv >= 31) return '三段目';
-    if (lv >= 21) return '序二段';
-    if (lv >= 11) return '序ノ口';
+    if (lv >= 100) return '横綱';
+    if (lv >= 90) return '大関';
+    if (lv >= 80) return '関脇';
+    if (lv >= 70) return '小結';
+    if (lv >= 60) return '前頭';
+    if (lv >= 50) return '十両';
+    if (lv >= 40) return '幕下';
+    if (lv >= 30) return '三段目';
+    if (lv >= 20) return '序二段';
+    if (lv >= 10) return '序ノ口';
     return '前相撲';
   }
 
