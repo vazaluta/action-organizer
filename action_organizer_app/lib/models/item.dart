@@ -3,7 +3,8 @@ import 'dart:convert';
 enum ItemCategory {
   routine,
   task,
-  hobby;
+  hobby,
+  mindset;
 
   String get displayName {
     switch (this) {
@@ -13,6 +14,8 @@ enum ItemCategory {
         return 'Task';
       case ItemCategory.hobby:
         return 'Hobby';
+      case ItemCategory.mindset:
+        return 'Mindset';
     }
   }
 
