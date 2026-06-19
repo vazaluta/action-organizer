@@ -332,17 +332,49 @@ class _ItemListView extends StatelessWidget {
             color: Colors.amber.shade600,
           ),
           title: Text(item.title),
-          subtitle: item.memo != null && item.memo!.isNotEmpty
-              ? Text(
-                  item.memo!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: colorScheme.outline),
-                )
-              : null,
-          onTap: () => onTap(item),
+          onTap: () => _showMindsetMemo(context, item),
+          trailing: IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => onTap(item),
+          ),
         );
     }
+  }
+
+  void _showMindsetMemo(BuildContext context, Item item) {
+    final hasMemo = item.memo != null && item.memo!.isNotEmpty;
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.lightbulb, color: Colors.amber.shade600, size: 20),
+            const SizedBox(width: 8),
+            Expanded(child: Text(item.title)),
+          ],
+        ),
+        content: hasMemo
+            ? Text(item.memo!)
+            : Text(
+                'まだ理由が書かれていません。\n編集して心がけの背景を書いておきましょう。',
+                style: TextStyle(color: Theme.of(context).colorScheme.outline),
+              ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('閉じる'),
+          ),
+          if (!hasMemo)
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onTap(item);
+              },
+              child: const Text('理由を書く'),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
