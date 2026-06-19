@@ -8,6 +8,7 @@ class StorageService {
   static const _notificationEnabledKey = 'notification_enabled';
   static const _notificationHourKey = 'notification_hour';
   static const _notificationMinuteKey = 'notification_minute';
+  static const _tabOrderKey = 'tab_order';
 
   Future<List<Item>> loadItems() async {
     final prefs = await SharedPreferences.getInstance();
@@ -38,6 +39,25 @@ class StorageService {
     final minute = prefs.getInt(_notificationMinuteKey);
     if (hour == null || minute == null) return null;
     return TimeOfDay(hour: hour, minute: minute);
+  }
+
+  static const _defaultTabOrder = [
+    'routine',
+    'task',
+    'hobby',
+    'mindset',
+  ];
+
+  Future<List<ItemCategory>> loadTabOrder() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList(_tabOrderKey);
+    final names = saved ?? _defaultTabOrder;
+    return names.map(ItemCategory.fromString).toList();
+  }
+
+  Future<void> saveTabOrder(List<ItemCategory> order) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_tabOrderKey, order.map((c) => c.name).toList());
   }
 
   Future<void> saveNotificationTime(TimeOfDay? time) async {
