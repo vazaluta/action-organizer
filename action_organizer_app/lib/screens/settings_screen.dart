@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
@@ -22,6 +23,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _load() async {
+    if (kIsWeb) {
+      setState(() => _loading = false);
+      return;
+    }
     final time = await _storage.loadNotificationTime();
     setState(() {
       _enabled = time != null;
@@ -70,33 +75,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
           : ListView(
               children: [
                 const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: Text(
-                    '通知',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: colorScheme.primary,
-                        ),
-                  ),
-                ),
-                SwitchListTile(
-                  title: const Text('毎日リマインダー'),
-                  subtitle: const Text('心がけを思い出させる通知を毎日届けます'),
-                  value: _enabled,
-                  onChanged: _toggleEnabled,
-                ),
-                if (_enabled)
-                  ListTile(
-                    leading: const Icon(Icons.access_time_outlined),
-                    title: const Text('通知時刻'),
-                    trailing: Text(
-                      _time.format(context),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                if (!kIsWeb) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    child: Text(
+                      '通知',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             color: colorScheme.primary,
-                            fontWeight: FontWeight.bold,
                           ),
                     ),
-                    onTap: _pickTime,
+                  ),
+                  SwitchListTile(
+                    title: const Text('毎日リマインダー'),
+                    subtitle: const Text('心がけを思い出させる通知を毎日届けます'),
+                    value: _enabled,
+                    onChanged: _toggleEnabled,
+                  ),
+                  if (_enabled)
+                    ListTile(
+                      leading: const Icon(Icons.access_time_outlined),
+                      title: const Text('通知時刻'),
+                      trailing: Text(
+                        _time.format(context),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
+                      onTap: _pickTime,
+                    ),
+                ] else
+                  const ListTile(
+                    leading: Icon(Icons.info_outline),
+                    title: Text('通知はモバイルアプリのみ対応しています'),
                   ),
               ],
             ),
