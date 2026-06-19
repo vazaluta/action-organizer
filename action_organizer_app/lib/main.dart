@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 import 'models/item.dart';
 import 'screens/main_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'services/notification_service.dart';
 import 'services/storage_service.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
+  final tzName = await FlutterTimezone.getLocalTimezone();
+  tz.setLocalLocation(tz.getLocation(tzName));
+  await NotificationService.instance.initialize();
   runApp(const ActionOrganizerApp());
 }
 

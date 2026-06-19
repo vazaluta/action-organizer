@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/storage_service.dart';
 import 'item_form_screen.dart';
+import 'settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -122,6 +123,15 @@ class _MainScreenState extends State<MainScreen>
         backgroundColor: colorScheme.inversePrimary,
         title: const Text('行動整理'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: '設定',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: _tabs
