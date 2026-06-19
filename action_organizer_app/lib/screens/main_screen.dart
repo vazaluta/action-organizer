@@ -21,6 +21,7 @@ class _MainScreenState extends State<MainScreen>
     ItemCategory.routine,
     ItemCategory.task,
     ItemCategory.hobby,
+    ItemCategory.mindset,
   ];
 
   @override
@@ -321,6 +322,25 @@ class _ItemListView extends StatelessWidget {
                 onPressed: () => onTap(item),
               ),
             ],
+          ),
+        );
+
+      case ItemCategory.mindset:
+        final kept = item.isDoneToday;
+        return ListTile(
+          leading: Icon(
+            kept ? Icons.lightbulb : Icons.lightbulb_outline,
+            color: kept ? Colors.amber.shade600 : colorScheme.outline,
+          ),
+          title: Text(item.title),
+          onTap: () => onUpdate(
+            kept
+                ? item.copyWith(resetLastDoneDate: true)
+                : item.copyWith(lastDoneDate: DateTime.now()),
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => onTap(item),
           ),
         );
     }

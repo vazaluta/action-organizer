@@ -20,6 +20,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ItemCategory.routine,
     ItemCategory.task,
     ItemCategory.hobby,
+    ItemCategory.mindset,
   ];
 
   static const _candidates = {
@@ -49,6 +50,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'ボードゲーム', 'アニメを観る', '漫画を読む', 'カラオケ', 'キャンプ',
       'サイクリング', '水泳', 'テニス', 'サッカー', '将棋・チェス',
       'パズル', 'ミニチュア作り', '陶芸', 'カリグラフィー', '美術館巡り',
+    ],
+    ItemCategory.mindset: [
+      'YouTubeを見ない', '深く考えすぎない', 'エスカレーターより階段を使う',
+      'スマホを見すぎない', 'ネガティブな言葉を使わない', 'まず行動する',
+      '感謝を忘れない', '人と比べない', '失敗を恐れない', '今に集中する',
+      '丁寧に話す', '人の話をよく聞く', '完璧を求めすぎない', 'SNSを無駄に見ない',
+      '批判より解決策を考える', '自分を責めない', 'プロセスを楽しむ',
+      '他者の評価を気にしすぎない', '好奇心を持ち続ける', '丁寧に生きる',
+      'できることに集中する', '笑顔を忘れない', '焦らない', '素直でいる',
+      '謙虚でいる', '小さな変化を楽しむ', '朝の時間を大切にする',
+      '睡眠を削らない', '一日一善', '批判より理解を選ぶ',
     ],
   };
 
@@ -224,6 +236,8 @@ class _CategoryPage extends StatelessWidget {
         return 'やっておきたいことを選んでください';
       case ItemCategory.hobby:
         return '楽しんでいることを選んでください';
+      case ItemCategory.mindset:
+        return '心がけたいことを選んでください';
     }
   }
 
@@ -236,6 +250,8 @@ class _CategoryPage extends StatelessWidget {
         return cs.secondary;
       case ItemCategory.hobby:
         return cs.tertiary;
+      case ItemCategory.mindset:
+        return Colors.amber.shade700;
     }
   }
 
