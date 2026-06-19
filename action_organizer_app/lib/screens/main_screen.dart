@@ -326,22 +326,21 @@ class _ItemListView extends StatelessWidget {
         );
 
       case ItemCategory.mindset:
-        final kept = item.isDoneToday;
         return ListTile(
           leading: Icon(
-            kept ? Icons.lightbulb : Icons.lightbulb_outline,
-            color: kept ? Colors.amber.shade600 : colorScheme.outline,
+            Icons.lightbulb,
+            color: Colors.amber.shade600,
           ),
           title: Text(item.title),
-          onTap: () => onUpdate(
-            kept
-                ? item.copyWith(resetLastDoneDate: true)
-                : item.copyWith(lastDoneDate: DateTime.now()),
-          ),
-          trailing: IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: () => onTap(item),
-          ),
+          subtitle: item.memo != null && item.memo!.isNotEmpty
+              ? Text(
+                  item.memo!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: colorScheme.outline),
+                )
+              : null,
+          onTap: () => onTap(item),
         );
     }
   }
