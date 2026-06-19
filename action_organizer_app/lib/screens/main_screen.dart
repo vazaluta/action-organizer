@@ -352,37 +352,14 @@ class _ItemListView extends StatelessWidget {
   }
 
   void _showMindsetMemo(BuildContext context, Item item) {
-    final hasMemo = item.memo != null && item.memo!.isNotEmpty;
     showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.lightbulb, color: Colors.amber.shade600, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(item.title)),
-          ],
-        ),
-        content: hasMemo
-            ? Text(item.memo!)
-            : Text(
-                'まだ理由が書かれていません。\n編集して心がけの背景を書いておきましょう。',
-                style: TextStyle(color: Theme.of(context).colorScheme.outline),
-              ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('閉じる'),
-          ),
-          if (!hasMemo)
-            FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onTap(item);
-              },
-              child: const Text('理由を書く'),
-            ),
-        ],
+      builder: (_) => _MindsetMemoDialog(
+        item: item,
+        onSave: (memo) => onUpdate(item.copyWith(
+          memo: memo,
+          updatedAt: DateTime.now(),
+        )),
       ),
     );
   }
@@ -421,6 +398,69 @@ class _ItemListView extends StatelessWidget {
       itemCount: items.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (_, index) => _buildListTile(context, items[index]),
+    );
+  }
+}
+
+class _MindsetMemoDialog extends StatefulWidget {
+  final Item item;
+  final void Function(String?) onSave;
+
+  const _MindsetMemoDialog({required this.item, required this.onSave});
+
+  @override
+  State<_MindsetMemoDialog> createState() => _MindsetMemoDialogState();
+}
+
+class _MindsetMemoDialogState extends State<_MindsetMemoDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.item.memo ?? '');
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEmpty = widget.item.memo == null || widget.item.memo!.isEmpty;
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.lightbulb, color: Colors.amber.shade600, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(widget.item.title)),
+        ],
+      ),
+      content: TextField(
+        controller: _controller,
+        autofocus: isEmpty,
+        maxLines: 5,
+        decoration: const InputDecoration(
+          hintText: 'この心がけを大切にする理由...',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final text = _controller.text.trim();
+            Navigator.of(context).pop();
+            widget.onSave(text.isEmpty ? null : text);
+          },
+          child: const Text('保存'),
+        ),
+      ],
     );
   }
 }
