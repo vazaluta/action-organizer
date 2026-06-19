@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/storage_service.dart';
 import 'item_form_screen.dart';
+import 'settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -122,6 +123,15 @@ class _MainScreenState extends State<MainScreen>
         backgroundColor: colorScheme.inversePrimary,
         title: const Text('行動整理'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: '設定',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: _tabs
@@ -326,24 +336,32 @@ class _ItemListView extends StatelessWidget {
         );
 
       case ItemCategory.mindset:
-        final kept = item.isDoneToday;
         return ListTile(
           leading: Icon(
-            kept ? Icons.lightbulb : Icons.lightbulb_outline,
-            color: kept ? Colors.amber.shade600 : colorScheme.outline,
+            Icons.lightbulb,
+            color: Colors.amber.shade600,
           ),
           title: Text(item.title),
-          onTap: () => onUpdate(
-            kept
-                ? item.copyWith(resetLastDoneDate: true)
-                : item.copyWith(lastDoneDate: DateTime.now()),
-          ),
+          onTap: () => _showMindsetMemo(context, item),
           trailing: IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => onTap(item),
           ),
         );
     }
+  }
+
+  void _showMindsetMemo(BuildContext context, Item item) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => _MindsetMemoDialog(
+        item: item,
+        onSave: (memo) => onUpdate(item.copyWith(
+          memo: memo,
+          updatedAt: DateTime.now(),
+        )),
+      ),
+    );
   }
 
   @override
@@ -380,6 +398,69 @@ class _ItemListView extends StatelessWidget {
       itemCount: items.length,
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (_, index) => _buildListTile(context, items[index]),
+    );
+  }
+}
+
+class _MindsetMemoDialog extends StatefulWidget {
+  final Item item;
+  final void Function(String?) onSave;
+
+  const _MindsetMemoDialog({required this.item, required this.onSave});
+
+  @override
+  State<_MindsetMemoDialog> createState() => _MindsetMemoDialogState();
+}
+
+class _MindsetMemoDialogState extends State<_MindsetMemoDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.item.memo ?? '');
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEmpty = widget.item.memo == null || widget.item.memo!.isEmpty;
+    return AlertDialog(
+      title: Row(
+        children: [
+          Icon(Icons.lightbulb, color: Colors.amber.shade600, size: 20),
+          const SizedBox(width: 8),
+          Expanded(child: Text(widget.item.title)),
+        ],
+      ),
+      content: TextField(
+        controller: _controller,
+        autofocus: isEmpty,
+        maxLines: 5,
+        decoration: const InputDecoration(
+          hintText: 'この心がけを大切にする理由...',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final text = _controller.text.trim();
+            Navigator.of(context).pop();
+            widget.onSave(text.isEmpty ? null : text);
+          },
+          child: const Text('保存'),
+        ),
+      ],
     );
   }
 }
