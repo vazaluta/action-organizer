@@ -16,14 +16,13 @@ class _MainScreenState extends State<MainScreen>
   late TabController _tabController;
   final StorageService _storage = StorageService();
   List<Item> _items = [];
-  bool _loading = true;
-
-  static const _tabs = [
+  List<ItemCategory> _tabs = [
     ItemCategory.routine,
     ItemCategory.task,
     ItemCategory.hobby,
     ItemCategory.mindset,
   ];
+  bool _loading = true;
 
   @override
   void initState() {
@@ -39,11 +38,23 @@ class _MainScreenState extends State<MainScreen>
   }
 
   Future<void> _loadItems() async {
+    final order = await _storage.loadTabOrder();
     final items = await _storage.loadItems();
     setState(() {
+      _tabs = order;
       _items = items;
       _loading = false;
     });
+  }
+
+  Future<void> _openTabReorder() async {
+    final newOrder = await showModalBottomSheet<List<ItemCategory>>(
+      context: context,
+      builder: (_) => _TabReorderSheet(tabs: List.of(_tabs)),
+    );
+    if (newOrder == null) return;
+    setState(() => _tabs = newOrder);
+    await _storage.saveTabOrder(newOrder);
   }
 
   Future<void> _saveItems() async {
@@ -124,6 +135,11 @@ class _MainScreenState extends State<MainScreen>
         title: const Text('行動整理'),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.swap_vert),
+            tooltip: 'タブを並び替え',
+            onPressed: _openTabReorder,
+          ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: '設定',
@@ -689,6 +705,71 @@ class _RankUpOverlayState extends State<_RankUpOverlay>
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TabReorderSheet extends StatefulWidget {
+  final List<ItemCategory> tabs;
+  const _TabReorderSheet({required this.tabs});
+
+  @override
+  State<_TabReorderSheet> createState() => _TabReorderSheetState();
+}
+
+class _TabReorderSheetState extends State<_TabReorderSheet> {
+  late List<ItemCategory> _tabs;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = List.of(widget.tabs);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'タブを並び替え',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(_tabs),
+                  child: const Text('完了'),
+                ),
+              ],
+            ),
+          ),
+          ReorderableListView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            onReorder: (oldIndex, newIndex) {
+              setState(() {
+                if (newIndex > oldIndex) newIndex--;
+                final item = _tabs.removeAt(oldIndex);
+                _tabs.insert(newIndex, item);
+              });
+            },
+            children: [
+              for (final category in _tabs)
+                ListTile(
+                  key: ValueKey(category),
+                  leading: const Icon(Icons.drag_handle),
+                  title: Text(category.displayName),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
